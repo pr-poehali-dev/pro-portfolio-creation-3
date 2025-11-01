@@ -9,10 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 interface User {
-  username: string;
-  password: string;
-  avatar: string;
   nickname: string;
+  avatar: string;
 }
 
 interface Work {
@@ -26,8 +24,6 @@ interface Work {
 const Index = () => {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [currentView, setCurrentView] = useState<'gallery' | 'favorites' | 'settings'>('gallery');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [showAdminDialog, setShowAdminDialog] = useState(false);
@@ -35,16 +31,10 @@ const Index = () => {
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
   
-  const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [regUsername, setRegUsername] = useState('');
-  const [regPassword, setRegPassword] = useState('');
+  const [inputNickname, setInputNickname] = useState('');
   
   const [newNickname, setNewNickname] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [newAvatar, setNewAvatar] = useState('');
   
   const [works, setWorks] = useState<Work[]>([
@@ -68,38 +58,18 @@ const Index = () => {
   const [newWorkDescription, setNewWorkDescription] = useState('');
   const [newWorkImage, setNewWorkImage] = useState<File | null>(null);
 
-  const handleRegister = () => {
-    if (!regUsername || !regPassword) {
-      toast({ title: 'Ошибка', description: 'Заполните все поля', variant: 'destructive' });
-      return;
-    }
-    if (users.find(u => u.username === regUsername)) {
-      toast({ title: 'Ошибка', description: 'Пользователь уже существует', variant: 'destructive' });
+  const handleEnter = () => {
+    if (!inputNickname.trim()) {
+      toast({ title: 'Ошибка', description: 'Введите ваше имя', variant: 'destructive' });
       return;
     }
     const newUser: User = {
-      username: regUsername,
-      password: regPassword,
-      avatar: '/placeholder.svg',
-      nickname: regUsername
+      nickname: inputNickname.trim(),
+      avatar: '/placeholder.svg'
     };
-    setUsers([...users, newUser]);
-    toast({ title: 'Успешно', description: 'Регистрация завершена' });
-    setAuthMode('login');
-    setRegUsername('');
-    setRegPassword('');
-  };
-
-  const handleLogin = () => {
-    const user = users.find(u => u.username === loginUsername && u.password === loginPassword);
-    if (user) {
-      setCurrentUser(user);
-      setIsAuthenticated(true);
-      setShowAuth(false);
-      toast({ title: 'Добро пожаловать!', description: `Привет, ${user.nickname}` });
-    } else {
-      toast({ title: 'Ошибка', description: 'Неверный логин или пароль', variant: 'destructive' });
-    }
+    setCurrentUser(newUser);
+    setIsAuthenticated(true);
+    toast({ title: 'Добро пожаловать!', description: `Привет, ${inputNickname.trim()}` });
   };
 
   const handleLogout = () => {
@@ -130,14 +100,11 @@ const Index = () => {
       const updatedUser = {
         ...currentUser,
         nickname: newNickname || currentUser.nickname,
-        password: newPassword || currentUser.password,
         avatar: newAvatar || currentUser.avatar
       };
-      setUsers(users.map(u => u.username === currentUser.username ? updatedUser : u));
       setCurrentUser(updatedUser);
       toast({ title: 'Сохранено', description: 'Профиль обновлен' });
       setNewNickname('');
-      setNewPassword('');
       setNewAvatar('');
     }
   };
@@ -202,74 +169,19 @@ const Index = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={authMode === 'login' ? 'default' : 'outline'}
-                onClick={() => setAuthMode('login')}
-                className="w-full"
-              >
-                Вход
-              </Button>
-              <Button 
-                variant={authMode === 'register' ? 'default' : 'outline'}
-                onClick={() => setAuthMode('register')}
-                className="w-full"
-              >
-                Регистрация
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="nickname-input">Как вас зовут?</Label>
+              <Input 
+                id="nickname-input"
+                placeholder="Введите ваше имя"
+                value={inputNickname}
+                onChange={(e) => setInputNickname(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleEnter()}
+              />
             </div>
-
-            {authMode === 'login' ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-username">Логин</Label>
-                  <Input 
-                    id="login-username"
-                    placeholder="Введите логин"
-                    value={loginUsername}
-                    onChange={(e) => setLoginUsername(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Пароль</Label>
-                  <Input 
-                    id="login-password"
-                    type="password"
-                    placeholder="Введите пароль"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleLogin} className="w-full">
-                  Войти
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reg-username">Логин</Label>
-                  <Input 
-                    id="reg-username"
-                    placeholder="Придумайте логин"
-                    value={regUsername}
-                    onChange={(e) => setRegUsername(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password">Пароль</Label>
-                  <Input 
-                    id="reg-password"
-                    type="password"
-                    placeholder="Придумайте пароль"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleRegister} className="w-full">
-                  Зарегистрироваться
-                </Button>
-              </div>
-            )}
+            <Button onClick={handleEnter} className="w-full">
+              Войти
+            </Button>
           </div>
         </Card>
       </div>
@@ -516,23 +428,12 @@ const Index = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="nickname">Никнейм</Label>
+                  <Label htmlFor="nickname">Имя</Label>
                   <Input 
                     id="nickname"
                     placeholder={currentUser?.nickname}
                     value={newNickname}
                     onChange={(e) => setNewNickname(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">Новый пароль</Label>
-                  <Input 
-                    id="new-password"
-                    type="password"
-                    placeholder="Оставьте пустым, чтобы не менять"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
                   />
                 </div>
 
